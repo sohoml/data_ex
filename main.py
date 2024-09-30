@@ -88,148 +88,119 @@ def main():
             st.dataframe(df.head(10))  # Display first 10 rows
             st.markdown("</div>", unsafe_allow_html=True)
 
-            # Sidebar menu with buttons for sections
-            st.sidebar.title("🛠️ Menu")
-            data_operations_button = st.sidebar.button("🛠️ Data Operations")
-            visualization_button = st.sidebar.button("📊 Visualization")
+            # Sidebar menu for DataFrame operations
+            st.sidebar.title("🛠️ Data Operations")
 
-            if data_operations_button:
-                # Data Operations Functionalities
-                st.sidebar.title("🛠️ Data Operations")
-
-                # 1. Find Null Values
-                if st.sidebar.button("Find Null Values"):
-                    null_summary = df.isnull().sum()
-                    null_columns = null_summary[null_summary > 0]
-                    if not null_columns.empty:
-                        # Display null value summary
-                        st.write("### Null Values Summary")
-                        null_df = pd.DataFrame({
-                            'Column Name': null_columns.index,
-                            'Null Count': null_columns.values,
-                            'Data Type': df.dtypes[null_columns.index].values
-                        })
-                        st.dataframe(null_df)  # Show null value summary
-                    else:
-                        st.success("No null values found in the dataset.")
-
-                # 2. Rename Columns
-                rename_column = st.sidebar.selectbox("Select a column to rename", df.columns)
-                new_name = st.sidebar.text_input("New name for the column", "")
-                if st.sidebar.button("Rename Column"):
-                    if new_name:
-                        df.rename(columns={rename_column: new_name}, inplace=True)
-                        st.success(f"Column '{rename_column}' renamed to '{new_name}'")
-                    else:
-                        st.warning("Please enter a new name for the column.")
-
-                # 3. Drop Columns
-                columns_to_drop = st.sidebar.multiselect("Select columns to drop", df.columns)
-                if st.sidebar.button("Drop Selected Columns"):
-                    df.drop(columns=columns_to_drop, inplace=True)
-                    st.success(f"Dropped columns: {', '.join(columns_to_drop)}")
-
-                # 4. Download updated DataFrame
-                def convert_df_to_csv(dataframe):
-                    return dataframe.to_csv(index=False).encode('utf-8')
-
-                csv = convert_df_to_csv(df)
-                st.sidebar.download_button("Download Updated File", data=csv, file_name='updated_data.csv', mime='text/csv')
-
-            if visualization_button:
-                # Visualization Functionalities
-                st.sidebar.title("📊 Visualization Options")
-
-                # Section for Plotting Options
-                st.sidebar.subheader('Single Column Plot')
-                single_col = st.sidebar.selectbox("Select a column for single-column plot", df.columns)
-                single_plot_type = st.sidebar.selectbox("Select plot type", ['Histogram', 'Box Plot'])
-
-                # New: Bins and Color for Single Column Plot
-                if single_plot_type == 'Histogram':
-                    bins = st.sidebar.number_input("Number of bins", min_value=1, value=10)
-                    color = st.sidebar.color_picker("Select color for histogram", "#1f77b4")
-
-                if st.sidebar.button("Generate Single Column Plot"):
-                    st.write(f"### {single_plot_type}: {single_col}")
-                    fig, ax = plt.subplots()
-                    if single_plot_type == 'Histogram':
-                        sns.histplot(df[single_col], bins=bins, color=color, ax=ax)
-                    elif single_plot_type == 'Box Plot':
-                        sns.boxplot(y=df[single_col], ax=ax, color=color)
-                    st.pyplot(fig)
-
-                # 2. X vs Y Visualizations (Scatter, Line, etc.)
-                st.sidebar.subheader('X vs Y Column Plot')
-                x_col = st.sidebar.selectbox("Select X-axis column", df.columns)
-                y_col = st.sidebar.selectbox("Select Y-axis column", df.columns)
-                plot_type = st.sidebar.selectbox("Select plot type", ['Scatter Plot', 'Line Plot', 'Bar Plot', 'Box Plot', 'Histogram'])
-
-                # New: Bins and Color for X vs Y Plot
-                if plot_type == 'Histogram':
-                    bins = st.sidebar.number_input("Number of bins for histogram", min_value=1, value=10)
-                    color = st.sidebar.color_picker("Select color for histogram", "#1f77b4")
+            # 1. Rename Columns
+            rename_column = st.sidebar.selectbox("Select a column to rename", df.columns)
+            new_name = st.sidebar.text_input("New name for the column", "")
+            if st.sidebar.button("Rename Column"):
+                if new_name:
+                    df.rename(columns={rename_column: new_name}, inplace=True)
+                    st.success(f"Column '{rename_column}' renamed to '{new_name}'")
                 else:
-                    color = st.sidebar.color_picker("Select color for X vs Y plots", "#1f77b4")
+                    st.warning("Please enter a new name for the column.")
 
-                if st.sidebar.button("Generate X vs Y Plot"):
-                    st.write(f"### {plot_type}: {x_col} vs {y_col}")
-                    if plot_type == 'Scatter Plot':
-                        fig = px.scatter(df, x=x_col, y=y_col, color_discrete_sequence=[color])
-                    elif plot_type == 'Line Plot':
-                        fig = px.line(df, x=x_col, y=y_col, line_shape='linear', color_discrete_sequence=[color])
-                    elif plot_type == 'Bar Plot':
-                        fig = px.bar(df, x=x_col, y=y_col, color_discrete_sequence=[color])
-                    elif plot_type == 'Box Plot':
-                        fig = px.box(df, x=x_col, y=y_col, color_discrete_sequence=[color])
-                    elif plot_type == 'Histogram':
-                        fig = px.histogram(df, x=x_col, nbins=bins, color_discrete_sequence=[color])
-                    st.plotly_chart(fig)
+            # 2. Drop Columns
+            columns_to_drop = st.sidebar.multiselect("Select columns to drop", df.columns)
+            if st.sidebar.button("Drop Selected Columns"):
+                df.drop(columns=columns_to_drop, inplace=True)
+                st.success(f"Dropped columns: {', '.join(columns_to_drop)}")
 
-                # 3. Multi-column visualizations
-                st.sidebar.subheader('Multi-Column Visualization')
-                multi_columns = st.sidebar.multiselect("Select columns for multi-column visualizations", df.columns)
+            # 3. Download updated DataFrame
+            def convert_df_to_csv(dataframe):
+                return dataframe.to_csv(index=False).encode('utf-8')
 
-                # New: Plot types for Multi-Column Visualization
-                multi_plot_type = st.sidebar.selectbox("Select plot type for multi-columns", 
-                                                       ['Pair Plot', 'Scatter Plot', 'Box Plot', 'Histogram'])
+            csv = convert_df_to_csv(df)
+            st.sidebar.download_button("Download Updated File", data=csv, file_name='updated_data.csv', mime='text/csv')
 
-                # New: Bins option for Multi-column Plot
-                bins = st.sidebar.number_input("Number of bins (for applicable plots)", min_value=1, value=10)
+            # Section for Plotting Options
+            st.sidebar.title("📊 Plotting Options")
 
-                if st.sidebar.button("Generate Multi-Column Plot"):
-                    if len(multi_columns) < 2:
-                        st.warning("Please select at least two columns.")
-                    else:
-                        st.write(f"### {multi_plot_type} of {', '.join(multi_columns)}")
-                        if multi_plot_type == 'Pair Plot':
-                            sns.pairplot(df[multi_columns])
-                            plt.show()
-                            st.pyplot()
-                        elif multi_plot_type == 'Scatter Plot':
-                            if len(multi_columns) == 2:
-                                plt.scatter(df[multi_columns[0]], df[multi_columns[1]], alpha=0.5)
-                                plt.xlabel(multi_columns[0])
-                                plt.ylabel(multi_columns[1])
-                                plt.title(f'Scatter Plot of {multi_columns[0]} vs {multi_columns[1]}')
-                                st.pyplot()
-                            else:
-                                st.warning("Scatter Plot requires exactly two columns.")
-                        elif multi_plot_type == 'Box Plot':
-                            plt.figure(figsize=(10, 6))
-                            sns.boxplot(data=df[multi_columns])
-                            plt.title(f'Box Plot of {", ".join(multi_columns)}')
-                            st.pyplot()
-                        elif multi_plot_type == 'Histogram':
-                            hist_fig = plt.figure()
-                            for col in multi_columns:
-                                sns.histplot(df[col], bins=bins, label=col, alpha=0.5)
-                            plt.legend()
-                            plt.title(f'Histogram of {", ".join(multi_columns)}')
-                            st.pyplot(hist_fig)
+            # 1. Single Column Visualizations (Histograms, Box Plots, etc.)
+            st.sidebar.subheader('Single Column Plot')
+            single_col = st.sidebar.selectbox("Select a column for single-column plot", df.columns)
+            single_plot_type = st.sidebar.selectbox("Select plot type", ['Histogram', 'Box Plot'])
+
+            # New: Bins and Color for Single Column Plot
+            if single_plot_type == 'Histogram':
+                bins = st.sidebar.number_input("Number of bins", min_value=1, value=10)
+                color = st.sidebar.color_picker("Select color for histogram", "#1f77b4")
+
+            if st.sidebar.button("Generate Single Column Plot"):
+                st.write(f"### {single_plot_type}: {single_col}")
+                fig, ax = plt.subplots()
+                if single_plot_type == 'Histogram':
+                    sns.histplot(df[single_col], bins=bins, color=color, ax=ax)
+                elif single_plot_type == 'Box Plot':
+                    sns.boxplot(y=df[single_col], ax=ax, color=color)
+                st.pyplot(fig)
+
+            # 2. X vs Y Visualizations (Scatter, Line, etc.)
+            st.sidebar.subheader('X vs Y Column Plot')
+            x_col = st.sidebar.selectbox("Select X-axis column", df.columns)
+            y_col = st.sidebar.selectbox("Select Y-axis column", df.columns)
+            plot_type = st.sidebar.selectbox("Select plot type", ['Scatter Plot', 'Line Plot', 'Bar Plot', 'Box Plot', 'Histogram'])
+
+            # New: Bins and Color for X vs Y Plot
+            if plot_type == 'Histogram':
+                bins = st.sidebar.number_input("Number of bins for histogram", min_value=1, value=10)
+                color = st.sidebar.color_picker("Select color for histogram", "#1f77b4")
+            else:
+                color = st.sidebar.color_picker("Select color for X vs Y plots", "#1f77b4")
+
+            if st.sidebar.button("Generate X vs Y Plot"):
+                st.write(f"### {plot_type}: {x_col} vs {y_col}")
+                if plot_type == 'Scatter Plot':
+                    fig = px.scatter(df, x=x_col, y=y_col, color_discrete_sequence=[color])
+                elif plot_type == 'Line Plot':
+                    fig = px.line(df, x=x_col, y=y_col, line_shape='linear', color_discrete_sequence=[color])
+                elif plot_type == 'Bar Plot':
+                    fig = px.bar(df, x=x_col, y=y_col, color_discrete_sequence=[color])
+                elif plot_type == 'Box Plot':
+                    fig = px.box(df, x=x_col, y=y_col, color_discrete_sequence=[color])
+                elif plot_type == 'Histogram':
+                    fig = px.histogram(df, x=x_col, nbins=bins, color_discrete_sequence=[color])
+                st.plotly_chart(fig)
+
+            # 3. Multi-column visualizations
+            st.sidebar.subheader('Multi-Column Visualization')
+            multi_columns = st.sidebar.multiselect("Select columns for multi-column visualizations", df.columns)
+
+            # New: Plot types for Multi-Column Visualization
+            multi_plot_type = st.sidebar.selectbox("Select plot type for multi-columns", 
+                                                   ['Pair Plot', 'Scatter Plot', 'Box Plot', 'Histogram'])
+
+            # New: Bins option for Multi-column Plot
+            bins = st.sidebar.number_input("Number of bins (for applicable plots)", min_value=1, value=10)
+
+            if st.sidebar.button("Generate Multi-Column Plot"):
+                if len(multi_columns) < 2:
+                    st.warning("Please select at least two columns.")
+                else:
+                    st.write(f"### {multi_plot_type} of {', '.join(multi_columns)}")
+                    if multi_plot_type == 'Pair Plot':
+                        pair_plot = sns.pairplot(df[multi_columns])
+                        st.pyplot(pair_plot)
+                    elif multi_plot_type == 'Scatter Plot':
+                        fig = sns.scatterplot(data=df, x=multi_columns[0], y=multi_columns[1])
+                        plt.title(f'Scatter Plot: {multi_columns[0]} vs {multi_columns[1]}')
+                        st.pyplot(fig)
+                    elif multi_plot_type == 'Box Plot':
+                        fig = plt.figure()
+                        sns.boxplot(data=df[multi_columns])
+                        plt.title(f'Box Plot of {", ".join(multi_columns)}')
+                        st.pyplot(fig)
+                    elif multi_plot_type == 'Histogram':
+                        fig = plt.figure()
+                        for col in multi_columns:
+                            sns.histplot(df[col], bins=bins, label=col, kde=True)
+                        plt.title('Histogram of Selected Columns')
+                        plt.legend()
+                        st.pyplot(fig)
 
         except Exception as e:
-            st.error(f"Error reading the file: {e}")
+            st.error(f"Error: {e}")
 
 if __name__ == '__main__':
     main()
